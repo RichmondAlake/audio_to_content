@@ -8,10 +8,8 @@ import timeit
 import logging
 import streamlit as st
 
-
-
 # Initialize OpenAI client
-openai.api_key = st.secrets["openai"]
+openai.api_key = st.secrets['openai']
 
 # Cache the encoding
 ENCODING = tiktoken.get_encoding("gpt2")
