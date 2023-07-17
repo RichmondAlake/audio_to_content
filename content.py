@@ -6,9 +6,12 @@ from collections import deque
 import bisect
 import timeit
 import logging
+import streamlit as st
+
+
 
 # Initialize OpenAI client
-openai.api_key = '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'
+openai.api_key = st.secrets["openai"]
 
 # Cache the encoding
 ENCODING = tiktoken.get_encoding("gpt2")

@@ -11,7 +11,9 @@ from content import summarize_transcript, answer_queries
 
 
 # Initialize Deepgram client
-deepgram = st.secrets["deepgram"]
+deepgram_api = st.secrets['deepgram']
+deepgram = Deepgram(deepgram_api)
+
 
 st.title('Audio 🎶 to Content 📄')
 
