@@ -108,7 +108,7 @@ def count_tokens(transcript):
 
 
 def generate_therapy_session_report(transcript):
-    transcript_summary = summarize_transcript(transcript, 3500) if count_tokens(transcript) > 3500 else transcript
+    transcript_summary = summarize_transcript(transcript) if count_tokens(transcript) > GPT35_TOKEN_LENGTH else transcript
     
     instruction = """ Instruction: Using the provided therapy transcript: Generate a mental health report based on a therapy session with a patient. Include the following sections as headings and provide information under each section:
         Patient Information:
@@ -127,7 +127,7 @@ def generate_therapy_session_report(transcript):
         Do not make up information about the patient that is not in the transcript
         """
     report = openai.ChatCompletion.create(
-        model= "gpt-4",  #"gpt-3.5-turbo", 
+        model= MODEL,
         messages=[
                 {"role": "system", "content": instruction},
                 {"role": "user", "content": transcript_summary},
@@ -139,64 +139,132 @@ def generate_therapy_session_report(transcript):
 
     return report["choices"][0]["message"]["content"]
 
-def generate_blog(data, data_type, transcript_summarised=None) -> str:
-    instruction = ("Revise the provided transcript into a comprehensive, captivating, and informative blog post by extracting "
-                   "essential points, themes, and discussions. Compose a title, introduction, main body with well-structured headings, "
-                   "and conclusion that effectively convey the content's depth and appeal.")
-    return generate_social_content(data, data_type, instruction, transcript_summarised)
+def generate_therapy_session_report(transcript):
+    transcript_summary = summarize_transcript(transcript) if count_tokens(transcript) > GPT35_TOKEN_LENGTH else transcript
+    
+    instruction = """ Instruction: Using the provided therapy transcript: Generate a mental health report based on a therapy session with a patient. Include the following sections as headings and provide information under each section:
+        Patient Information:
+        Reason for Treatment:
+        Assessment:
+        Treatment Plan:
+        Progress Notes:
+        Medication:
+        Referrals:
+        Risk Assessment:
+        Legal and Ethical Considerations:
 
-def generate_linkedIn_post_from_transcript(data, tone, length, data_type, transcript_summarised=None) -> str:
-    instruction = "You convert transcripts into an engaging LinkedIn post. The post should have a {tone} tone and be {length} length. Add 3 relevant hashtags at the end of the post."
-    return generate_social_content(data, data_type, instruction, transcript_summarised)
-
-
-
-def generate_social_content(data, data_type, instruction, transcript_summarised=None):
-    start_time = timeit.default_timer()
-    token_length_check = TARGET_TOKEN_LENGTH
-    transcript_summary = transcript_summarised
-
-    if data_type != "transcript":
-        logging.info("Generating content post from data analysis and directly from transcript")
-        transcript_word, transcript_word_timestamp = transcript_combination_timestamp.transcript_combination_timestamp_for_content_generation(data)
-        if not transcript_word:
-            logging.error("Transcript data is empty")
-            raise ValueError("Transcript cannot be empty.")
-        
-        summarize_start_time = timeit.default_timer()
-        transcript_summary = summarize_transcript(transcript_word, token_length_check) if count_tokens(transcript_word) > token_length_check else transcript_word
-        summarize_end_time = timeit.default_timer()
-
-        # Save the summary in the database
-
-
-        logging.info(f"Time taken for summarizing transcript: {summarize_end_time - summarize_start_time:.2f} seconds")
-    else:
-        logging.info("Generating content post from summary directly")
-
-    try:
-        social_post = openai.ChatCompletion.create(
-            model=MODEL,
-            messages=[
+        Generate a mental health report based on the above prompt, following the given sections above and providing relevant information under each section.
+        Use the NICE(national institute for health and care excellence) Attention deficit hyperactivity disorder: diagnosis and management as your knowledge base and make references in each section of your response.
+        If there is not enough information in transcript in to generate the report, always reply with "Not Enough Information".
+        Do not make up information about the patient that is not in the transcript
+        """
+    report = openai.ChatCompletion.create(
+        model= MODEL,
+        messages=[
                 {"role": "system", "content": instruction},
                 {"role": "user", "content": transcript_summary},
             ],
-            temperature=.5,
-            frequency_penalty=0,
-            presence_penalty=0.6
-        )
-    except OpenAIError as e:
-        logging.error(f"Failed to generate content with OpenAI: {str(e)}")
-        raise
+        temperature= 0.5,
+        frequency_penalty= 0,
+        presence_penalty= 0.6
+    )
 
-    api_end_time = timeit.default_timer()
-    end_time = timeit.default_timer()
+    return report["choices"][0]["message"]["content"]
 
-    logging.info(f"Time taken for OPENAI_API call: {api_end_time - start_time:.2f} seconds")
-    logging.info(f"Total time taken for process: {end_time - start_time:.2f} seconds")
+def generate_meeting_notes(transcript):
+    transcript_summary = summarize_transcript(transcript) if count_tokens(transcript) > GPT35_TOKEN_LENGTH else transcript
+    
+    instruction = """ 
+    Instruction: Using the provided meeting transcript, generate detailed meeting notes. Include the following sections as headings and provide information under each section:
+        Meeting Date and Time:
+        Attendees:
+        Key Discussion Points:
+        Decisions Made:
+        Action Items:
+        Next Steps:
+        Any Other Business:
 
-    return social_post["choices"][0]["message"]["content"].strip()
+    Generate meeting notes based on the above prompt, following the given sections above and providing relevant information under each section.
 
+    If there is not enough information in transcript to generate the meeting notes, always reply with "Not Enough Information".
+
+    Do not make up information that is not in the transcript.
+    """
+    report = openai.ChatCompletion.create(
+        model= MODEL,
+        messages=[
+                {"role": "system", "content": instruction},
+                {"role": "user", "content": transcript_summary},
+            ],
+        temperature= 0.5,
+        frequency_penalty= 0,
+        presence_penalty= 0.6
+    )
+
+    return report["choices"][0]["message"]["content"]
+
+def generate_blog_post(transcript):
+    transcript_summary = summarize_transcript(transcript) if count_tokens(transcript) > GPT35_TOKEN_LENGTH else transcript
+    
+    instruction = """ 
+    Instruction: Using the provided transcript, generate a detailed and engaging blog post. Include the following sections as headings and provide information under each section:
+        Introduction:
+        Main Body:
+        Conclusion:
+
+    Generate a blog post based on the above prompt, following the given sections above and providing relevant information under each section. 
+
+    The blog post should be engaging and easy to read, with a clear structure that includes an introduction, a main body with several key points or sections, and a conclusion.
+
+    If there is not enough information in transcript to generate the blog post, always reply with "Not Enough Information".
+
+    Do not make up information that is not in the transcript.
+    """
+    blog_post = openai.ChatCompletion.create(
+        model= MODEL,
+        messages=[
+                {"role": "system", "content": instruction},
+                {"role": "user", "content": transcript_summary},
+            ],
+        temperature= 0.5,
+        frequency_penalty= 0,
+        presence_penalty= 0.6
+    )
+
+    return blog_post["choices"][0]["message"]["content"]
+
+def generate_statement_of_work(transcript):
+    transcript_summary = summarize_transcript(transcript) if count_tokens(transcript) > GPT35_TOKEN_LENGTH else transcript
+    
+    instruction = """ 
+    Instruction: Using the provided consultation meeting transcript, generate a detailed Statement of Work (SoW). Include the following sections as headings and provide information under each section:
+        Project Overview:
+        Scope of Work:
+        Deliverables:
+        Timeline:
+        Payment Schedule:
+        Terms and Conditions:
+
+    Generate a SoW based on the above prompt, following the given sections above and providing relevant information under each section. 
+
+    The SoW should be clear and concise, outlining the work to be done, the deliverables, the timeline, the payment schedule, and any terms and conditions.
+
+    If there is not enough information in the transcript to generate the SoW, always reply with "Not Enough Information".
+
+    Do not make up information that is not in the transcript.
+    """
+    sow = openai.ChatCompletion.create(
+        model= MODEL,
+        messages=[
+                {"role": "system", "content": instruction},
+                {"role": "user", "content": transcript_summary},
+            ],
+        temperature= 0.5,
+        frequency_penalty= 0,
+        presence_penalty= 0.6
+    )
+
+    return sow["choices"][0]["message"]["content"]
 
 def answer_queries(transcript, query):
     instruction = """

@@ -2,24 +2,18 @@ import logging
 import traceback
 from urllib.error import URLError
 import streamlit as st
-import pandas as pd
-import numpy as np
 from deepgram import Deepgram
-import soundfile as sf
 import io
-from content import summarize_transcript, answer_queries
-
+from content import summarize_transcript, answer_queries, generate_therapy_session_report, generate_meeting_notes, generate_blog_post, generate_statement_of_work
 
 # Initialize Deepgram client
 deepgram_api = st.secrets['deepgram']
 deepgram = Deepgram(deepgram_api)
 
-
 st.title('Audio 🎶 to Content 📄')
 
 # Create file upload button
 uploaded_file = st.file_uploader("Choose an audio file", type=['mp3', 'wav'])
-
 
 if uploaded_file is not None:
     # Load the content of the file into a variable
@@ -49,28 +43,54 @@ if uploaded_file is not None:
 
                 st.markdown("---")
 
-                st.markdown("<h2 style='text-align: center; color: lightblue;'>Content Generation</h2>", unsafe_allow_html=True)
-
-                if st.button('Summary'):
-                    with st.spinner('Generating summary...'):
-                        summary = summarize_transcript(transcript=transcript)
-                        st.write(summary)
-                        
-                st.markdown("---")
-
-                # Chat interface
-                st.markdown("<h2 style='text-align: center; color: lightblue;'>Query Interface</h2>", unsafe_allow_html=True)
-                user_input = st.text_input("Enter your query:")
-                if st.button('Ask'):
-                    response = answer_queries(transcript, user_input)
-                    st.write(response)
-
             else:
-                st.write("No transcription available for this audio.")
+                st.error("No transcription available for this audio.")
         except URLError as e:
             logging.error(f"Deepgram API: Error while making the request: {e.reason}")
+            st.error("An error occurred during the transcription process. Please try again.")
         except Exception as e:
             logging.error(f"Deepgram API: Error while requesting transcript: {e}")
+            st.error("An error occurred during the transcription process. Please try again.")
             logging.error(traceback.format_exc())
 
-    
+    # Content Generation
+    if transcript:
+        st.markdown("<h2 style='text-align: center; color: lightblue;'>Content Generation</h2>", unsafe_allow_html=True)
+        content_type = st.selectbox('Choose the type of content:', ['Summary', 'Mental Health Report', 'Statement Of Work', 'Meeting Notes', 'Blog'])
+        
+        if content_type == 'Summary':
+            with st.spinner('Generating summary...'):
+                summary = summarize_transcript(transcript=transcript)
+                st.write(summary)
+
+        elif content_type == 'Mental Health Report':
+            with st.spinner('Generating Mental Health Report...'):
+                mental_health_report = generate_therapy_session_report(transcript=transcript)
+                st.write(mental_health_report)
+
+        elif content_type == 'Meeting Notes':
+            with st.spinner(f'Generating {content_type.lower()}...'):
+                meeting_notes = generate_meeting_notes(transcript=transcript)
+                st.write(meeting_notes)
+
+        elif content_type == 'Statement Of Work':
+            with st.spinner(f'Generating {content_type.lower()}...'):
+                sow = generate_statement_of_work(transcript=transcript)
+                st.write(sow)
+
+        elif content_type == 'Blog':
+            with st.spinner(f'Generating {content_type.lower()}...'):
+                blog = generate_blog_post(transcript=transcript)
+                st.write(blog)
+            
+        st.markdown("---")
+
+    if transcript:
+        # Chat interface
+        st.markdown("<h2 style='text-align: center; color: lightblue;'>Query Interface</h2>", unsafe_allow_html=True)
+        with st.spinner('Chatting...'):
+
+            user_input = st.text_input("Enter your query:")
+            if st.button('Ask'):
+                response = answer_queries(transcript, user_input)
+                st.write(response)
