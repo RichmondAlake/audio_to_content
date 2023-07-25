@@ -30,6 +30,7 @@ if col1.button('Ted Talk'):
     st.session_state.audio_file.name = 'openbci.mp3'
     st.session_state.audio_file.type = 'audio/mpeg'
     st.session_state.audio_file.size = st.session_state.audio_file.getbuffer().nbytes
+    st.audio(st.session_state.audio_file, format='audio/mpeg')
 elif col2.button('Client Meeting (coming soon...)'):
     url = 'https://example.com/audio2.mp3' 
     response = requests.get(url)
@@ -91,30 +92,32 @@ if 'transcript' in st.session_state:
     st.markdown("<h2 style='text-align: center; color: lightblue;'>Content Generation</h2>", unsafe_allow_html=True)
     st.session_state.content_type = st.selectbox('Choose the type of content:', ['Summary', 'Mental Health Report', 'Statement Of Work', 'Meeting Notes', 'Blog'], index=list(['Summary', 'Mental Health Report', 'Statement Of Work', 'Meeting Notes', 'Blog']).index(st.session_state.content_type) if 'content_type' in st.session_state else 0)
 
-    if st.session_state.content_type == 'Summary':
-        with st.spinner('Generating summary...'):
-            summary = summarize_transcript(transcript=st.session_state.transcript)
-            st.write(summary)
+    # Introduce a new button for content generation
+    if st.button('Generate Content'):
+        if st.session_state.content_type == 'Summary':
+            with st.spinner('Generating summary...'):
+                summary = summarize_transcript(transcript=st.session_state.transcript)
+                st.write(summary)
 
-    elif st.session_state.content_type == 'Mental Health Report':
-        with st.spinner('Generating Mental Health Report...'):
-            mental_health_report = generate_therapy_session_report(transcript=st.session_state.transcript)
-            st.write(mental_health_report)
+        elif st.session_state.content_type == 'Mental Health Report':
+            with st.spinner('Generating Mental Health Report...'):
+                mental_health_report = generate_therapy_session_report(transcript=st.session_state.transcript)
+                st.write(mental_health_report)
 
-    elif st.session_state.content_type == 'Meeting Notes':
-        with st.spinner(f'Generating {st.session_state.content_type.lower()}...'):
-            meeting_notes = generate_meeting_notes(transcript=st.session_state.transcript)
-            st.write(meeting_notes)
+        elif st.session_state.content_type == 'Meeting Notes':
+            with st.spinner(f'Generating {st.session_state.content_type.lower()}...'):
+                meeting_notes = generate_meeting_notes(transcript=st.session_state.transcript)
+                st.write(meeting_notes)
 
-    elif st.session_state.content_type == 'Statement Of Work':
-        with st.spinner(f'Generating {st.session_state.content_type.lower()}...'):
-            sow = generate_statement_of_work(transcript=st.session_state.transcript)
-            st.write(sow)
+        elif st.session_state.content_type == 'Statement Of Work':
+            with st.spinner(f'Generating {st.session_state.content_type.lower()}...'):
+                sow = generate_statement_of_work(transcript=st.session_state.transcript)
+                st.write(sow)
 
-    elif st.session_state.content_type == 'Blog':
-        with st.spinner(f'Generating {st.session_state.content_type.lower()}...'):
-            blog = generate_blog_post(transcript=st.session_state.transcript)
-            st.write(blog)
+        elif st.session_state.content_type == 'Blog':
+            with st.spinner(f'Generating {st.session_state.content_type.lower()}...'):
+                blog = generate_blog_post(transcript=st.session_state.transcript)
+                st.write(blog)
 
     st.markdown("---")
 
@@ -122,5 +125,6 @@ if 'transcript' in st.session_state:
     st.markdown("<h2 style='text-align: center; color: lightblue;'>Query Interface</h2>", unsafe_allow_html=True)
     st.session_state.user_input = st.text_input("Enter your query:", value=st.session_state.user_input if 'user_input' in st.session_state else '')
     if st.button('Ask'):
-        st.session_state.response = answer_queries(st.session_state.transcript, st.session_state.user_input)
-        st.write(st.session_state.response)
+        with st.spinner('Processing your query...'):
+            st.session_state.response = answer_queries(st.session_state.transcript, st.session_state.user_input)
+            st.write(st.session_state.response)
